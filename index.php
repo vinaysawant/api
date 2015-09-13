@@ -33,19 +33,22 @@ class Rest
 
     }
 
-    public function result_to_array($result, $isOnlyFirst = false)
+    public function result_to_array($result, $fields)
     {
         $data = array();
         if (is_resource($result)) {
-            while ($row = mysql_fetch_assoc($result)) {
-                $data[] = $row;
+            while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
+
+                $arr = array();
+                foreach ($fields as $key => $value){
+                    $arr[$row[$key]] = $value;
+                }
+
+                $data[] = array_flip($arr);
             }
 
             mysql_free_result($result);
 
-            if ($isOnlyFirst && is_array($data) AND count($data) > 0) {
-                $data = $data[0];
-            }
         }
 
         return $data;
@@ -69,23 +72,11 @@ class Rest
             $result = mysql_query($q);
             if (is_resource($result)) {
                 if (mysql_num_rows($result) > 0) {
-                    $count = mysql_num_rows($result);
-                    $records = $this->result_to_array($result);
-                } else {
-                    echo "No records found for query";
-                }
-            } else {
-                echo "Query is wrong";
-            }
-
-            $result = mysql_query($q);
-            if(is_resource($result)){
-                if(mysql_num_rows($result) > 0){
                     $i = 0;
                     while ($i < mysql_num_fields($result)) {
                         $meta = mysql_fetch_field($result, $i);
                         if ($meta) {
-                            $fields[$meta->name] = $meta->max_length;
+                            $fields[$meta->name] = $i;
                         }
                         $i++;
                     }
@@ -93,6 +84,19 @@ class Rest
                 }
 
             }
+
+            $result = mysql_query($q);
+            if (is_resource($result)) {
+                if (mysql_num_rows($result) > 0) {
+                    $count = mysql_num_rows($result);
+                    $records = $this->result_to_array($result, $fields);
+                } else {
+                    echo "No records found for query";
+                }
+            } else {
+                echo "Query is wrong";
+            }
+
 
             array_push($array,
                 array("count" => $count,
