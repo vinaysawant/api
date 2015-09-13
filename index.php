@@ -78,6 +78,22 @@ class Rest
                 echo "Query is wrong";
             }
 
+            $result = mysql_query($q);
+            if(is_resource($result)){
+                if(mysql_num_rows($result) > 0){
+                    $i = 0;
+                    while ($i < mysql_num_fields($result)) {
+                        $meta = mysql_fetch_field($result, $i);
+                        if ($meta) {
+                            $fields[$meta->name] = $meta->max_length;
+                        }
+                        $i++;
+                    }
+                    mysql_free_result($result);
+                }
+
+            }
+
             array_push($array,
                 array("count" => $count,
                     "records" => $records,
